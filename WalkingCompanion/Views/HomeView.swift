@@ -10,58 +10,67 @@ struct HomeView: View {
     @State private var isStartingWalk = false
     @State private var startError: String?
 
+    // Gradient used for the app icon and card border
+    private let brandGradient = LinearGradient(
+        colors: [.green, .teal, .blue, .purple, .orange, .yellow],
+        startPoint: .topLeading,
+        endPoint: .bottomTrailing
+    )
+
     var body: some View {
         NavigationStack {
-            ZStack {
-                Color(.systemGroupedBackground).ignoresSafeArea()
+        ZStack {
+            Color(.systemGroupedBackground).ignoresSafeArea()
 
-                if coordinator.isWalking {
-                    ActiveWalkView()
-                        .transition(.opacity)
-                } else {
-                    ScrollView {
-                        VStack(spacing: 24) {
-                            startButton
-                            cadenceCard
-                            if !sessions.isEmpty { recentCard }
-                            Spacer()
-                        }
-                        .padding()
-                        .frame(maxWidth: .infinity, minHeight: UIScreen.main.bounds.height - 120)
+            if coordinator.isWalking {
+                ActiveWalkView()
+                    .transition(.opacity)
+            } else {
+                ScrollView {
+                    VStack(spacing: 20) {
+                        appHeader
+                        cadenceCard
+                        startButton
+                        if !sessions.isEmpty { recentCard }
+                        Spacer(minLength: 24)
                     }
+                    .padding(.horizontal)
+                    .padding(.top, 16)
                 }
-            }
-            .navigationTitle("Walking Companion")
-            .navigationBarTitleDisplayMode(.inline)
-            .alert("Couldn't start walk", isPresented: .constant(startError != nil)) {
-                Button("OK") { startError = nil }
-            } message: {
-                Text(startError ?? "")
             }
         }
         .animation(.easeInOut(duration: 0.3), value: coordinator.isWalking)
+        .alert("Couldn't start walk", isPresented: .constant(startError != nil)) {
+            Button("OK") { startError = nil }
+        } message: {
+            Text(startError ?? "")
+        }
+        } // NavigationStack
+    }
+
+    // MARK: — Header
+
+    private var appHeader: some View {
+        HStack(spacing: 12) {
+            // App icon
+            ZStack {
+                Circle()
+                    .fill(brandGradient)
+                    .frame(width: 52, height: 52)
+                Image(systemName: "figure.walk")
+                    .font(.system(size: 24, weight: .semibold))
+                    .foregroundStyle(.white)
+            }
+
+            Text("Walking Companion")
+                .font(.title2.bold())
+
+            Spacer()
+        }
+        .padding(.top, 8)
     }
 
     // MARK: — Sections
-
-    private var startButton: some View {
-        Button {
-            startWalk()
-        } label: {
-            HStack {
-                Image(systemName: "figure.walk")
-                    .font(.title2)
-                Text("Start Walk")
-                    .font(.title3.bold())
-            }
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 20)
-            .background(.green)
-            .foregroundStyle(.white)
-            .clipShape(RoundedRectangle(cornerRadius: 16))
-        }
-        .disabled(isStartingWalk)
-    }
 
     private var cadenceCard: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -88,6 +97,29 @@ struct HomeView: View {
         .padding()
         .background(.background)
         .clipShape(RoundedRectangle(cornerRadius: 16))
+        .overlay(
+            RoundedRectangle(cornerRadius: 16)
+                .strokeBorder(brandGradient, lineWidth: 2)
+        )
+    }
+
+    private var startButton: some View {
+        Button {
+            startWalk()
+        } label: {
+            HStack {
+                Image(systemName: "figure.walk")
+                    .font(.title2)
+                Text("Start Walk")
+                    .font(.title3.bold())
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 20)
+            .background(.green)
+            .foregroundStyle(.white)
+            .clipShape(RoundedRectangle(cornerRadius: 16))
+        }
+        .disabled(isStartingWalk)
     }
 
     private var recentCard: some View {

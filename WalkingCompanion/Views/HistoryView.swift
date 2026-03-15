@@ -5,24 +5,27 @@ struct HistoryView: View {
     @Query(sort: \WalkSession.startDate, order: .reverse) private var sessions: [WalkSession]
 
     var body: some View {
-        Group {
-            if sessions.isEmpty {
-                ContentUnavailableView(
-                    "No walks yet",
-                    systemImage: "figure.walk",
-                    description: Text("Start your first walk to see it here.")
-                )
-            } else {
-                List(sessions) { session in
-                    NavigationLink {
-                        SessionDetailView(session: session)
-                    } label: {
-                        SessionRow(session: session)
+        NavigationStack {
+            Group {
+                if sessions.isEmpty {
+                    ContentUnavailableView(
+                        "No walks yet",
+                        systemImage: "figure.walk",
+                        description: Text("Start your first walk to see it here.")
+                    )
+                } else {
+                    List(sessions) { session in
+                        NavigationLink {
+                            SessionDetailView(session: session)
+                        } label: {
+                            SessionRow(session: session)
+                        }
                     }
                 }
             }
+            .navigationTitle("History")
+            .navigationBarTitleDisplayMode(.inline)
         }
-        .navigationTitle("History")
     }
 }
 
