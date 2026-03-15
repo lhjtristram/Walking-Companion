@@ -20,6 +20,8 @@
 	<string>1</string>
 	<key>WKApplication</key>
 	<true/>
+	<key>WKCompanionAppBundleIdentifier</key>
+	<string>com.lhjtristram.walkingcompanion</string>
 	<key>NSHealthShareUsageDescription</key>
 	<string>Walking Companion reads heart rate and health data during walks.</string>
 	<key>NSHealthUpdateUsageDescription</key>
