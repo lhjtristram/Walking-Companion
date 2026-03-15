@@ -29,6 +29,7 @@ struct AudioView: View {
                 }
             }
             .navigationTitle("Audio")
+            .navigationBarTitleDisplayMode(.inline)
         }
     }
 }
@@ -55,9 +56,24 @@ private struct MusicTabView: View {
 
     private var authorizedView: some View {
         Group {
-            if musicService.recentPlaylists.isEmpty {
+            if musicService.isLoading {
                 ProgressView("Loading playlists…")
-                    .task { await musicService.loadRecentPlaylists() }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+            } else if let error = musicService.loadError {
+                VStack(spacing: 12) {
+                    Image(systemName: "exclamationmark.triangle")
+                        .font(.largeTitle)
+                        .foregroundStyle(.orange)
+                    Text(error)
+                        .multilineTextAlignment(.center)
+                        .foregroundStyle(.secondary)
+                    Button("Try Again") {
+                        Task { await musicService.loadRecentPlaylists() }
+                    }
+                    .buttonStyle(.borderedProminent)
+                }
+                .padding()
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
                 List(musicService.recentPlaylists, id: \.id) { playlist in
                     Button {
@@ -75,8 +91,7 @@ private struct MusicTabView: View {
                                 }
                             }
                             Spacer()
-                            if musicService.nowPlayingTitle != nil &&
-                               musicService.nowPlayingTitle == playlist.name {
+                            if musicService.nowPlayingTitle == playlist.name {
                                 Image(systemName: "speaker.wave.2.fill")
                                     .foregroundStyle(.green)
                             }
@@ -86,6 +101,7 @@ private struct MusicTabView: View {
                 }
             }
         }
+        .task { await musicService.loadIfNeeded() }
     }
 }
 

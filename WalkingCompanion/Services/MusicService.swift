@@ -9,8 +9,16 @@ final class MusicService {
     private(set) var recentPlaylists: [Playlist] = []
     private(set) var nowPlayingTitle: String?
     private(set) var isPlaying: Bool = false
+    private(set) var isLoading: Bool = false
+    private(set) var loadError: String?
 
     private let player = ApplicationMusicPlayer.shared
+
+    init() {
+        // Seed from the current system status so we don't
+        // show an auth prompt when permission was already granted.
+        authorizationStatus = MusicAuthorization.currentStatus
+    }
 
     // MARK: — Permissions
 
@@ -23,15 +31,30 @@ final class MusicService {
 
     // MARK: — Library
 
+    /// Call on appear — skips if already loaded or loading.
+    func loadIfNeeded() async {
+        guard authorizationStatus == .authorized,
+              recentPlaylists.isEmpty,
+              !isLoading else { return }
+        await loadRecentPlaylists()
+    }
+
     func loadRecentPlaylists() async {
+        isLoading = true
+        loadError = nil
         do {
             var request = MusicLibraryRequest<Playlist>()
-            request.limit = 25
+            request.limit = 50
             let response = try await request.response()
             recentPlaylists = Array(response.items)
+            if recentPlaylists.isEmpty {
+                loadError = "No playlists found in your Apple Music library."
+            }
         } catch {
+            loadError = error.localizedDescription
             print("MusicService: playlist load error — \(error)")
         }
+        isLoading = false
     }
 
     // MARK: — Playback
