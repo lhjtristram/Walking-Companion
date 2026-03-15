@@ -24,13 +24,15 @@ struct HomeView: View {
                             startButton
                             cadenceCard
                             if !sessions.isEmpty { recentCard }
+                            Spacer()
                         }
                         .padding()
+                        .frame(maxWidth: .infinity, minHeight: UIScreen.main.bounds.height - 120)
                     }
                 }
             }
             .navigationTitle("Walking Companion")
-            .navigationBarTitleDisplayMode(.large)
+            .navigationBarTitleDisplayMode(.inline)
             .alert("Couldn't start walk", isPresented: .constant(startError != nil)) {
                 Button("OK") { startError = nil }
             } message: {
