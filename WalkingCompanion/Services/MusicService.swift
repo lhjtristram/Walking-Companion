@@ -8,6 +8,9 @@ final class MusicService {
     private(set) var authorizationStatus: MusicAuthorization.Status = .notDetermined
     private(set) var recentPlaylists: [Playlist] = []
     private(set) var nowPlayingTitle: String?
+    private(set) var nowPlayingArtist: String?
+    private(set) var nowPlayingArtwork: Artwork?
+    private(set) var currentPlaylistID: MusicItemID?
     private(set) var isPlaying: Bool = false
     private(set) var isLoading: Bool = false
     private(set) var loadError: String?
@@ -15,8 +18,6 @@ final class MusicService {
     private let player = ApplicationMusicPlayer.shared
 
     init() {
-        // Seed from the current system status so we don't
-        // show an auth prompt when permission was already granted.
         authorizationStatus = MusicAuthorization.currentStatus
     }
 
@@ -31,7 +32,7 @@ final class MusicService {
 
     // MARK: — Library
 
-    /// Call on appear — skips if already loaded or loading.
+    /// Idempotent — only loads if authorised and not already loaded.
     func loadIfNeeded() async {
         guard authorizationStatus == .authorized,
               recentPlaylists.isEmpty,
@@ -64,6 +65,7 @@ final class MusicService {
         do {
             player.queue = [playlist]
             try await player.play()
+            currentPlaylistID = playlist.id
             updateNowPlaying()
         } catch {
             print("MusicService: play error — \(error)")
@@ -84,11 +86,28 @@ final class MusicService {
         updateNowPlaying()
     }
 
-    // MARK: — Private
+    func skipPrevious() async {
+        // Restart current track — graceful fallback when no previous entry exists
+        player.playbackTime = 0
+        if !isPlaying {
+            do { try await player.play() } catch {}
+        }
+        updateNowPlaying()
+    }
 
-    private func updateNowPlaying() {
+    // MARK: — State sync
+    // Called by the view's polling task every second so track title / artwork
+    // stay current even when the playlist advances automatically.
+
+    func updateNowPlaying() {
         if let entry = player.queue.currentEntry {
-            nowPlayingTitle = entry.title
+            nowPlayingTitle  = entry.title
+            nowPlayingArtist = entry.subtitle
+            nowPlayingArtwork = entry.artwork
+        } else {
+            nowPlayingTitle   = nil
+            nowPlayingArtist  = nil
+            nowPlayingArtwork = nil
         }
         isPlaying = player.state.playbackStatus == .playing
     }

@@ -24,7 +24,7 @@ struct AudioView: View {
                 .padding()
 
                 switch selectedTab {
-                case .music: MusicTabView()
+                case .music:    MusicTabView()
                 case .podcasts: PodcastTabView()
                 }
             }
@@ -45,63 +45,219 @@ private struct MusicTabView: View {
             case .authorized:
                 authorizedView
             case .notDetermined:
-                AuthPromptView(message: "Allow access to your Apple Music library.", action: {
+                AuthPromptView(message: "Allow access to your Apple Music library.") {
                     await musicService.requestPermissions()
-                })
+                }
             default:
                 ContentUnavailableView("Apple Music Unavailable", systemImage: "music.note")
             }
         }
     }
 
+    // MARK: Authorized state
+
+    @ViewBuilder
     private var authorizedView: some View {
-        Group {
-            if musicService.isLoading {
-                ProgressView("Loading playlists…")
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-            } else if let error = musicService.loadError {
-                VStack(spacing: 12) {
-                    Image(systemName: "exclamationmark.triangle")
-                        .font(.largeTitle)
-                        .foregroundStyle(.orange)
-                    Text(error)
-                        .multilineTextAlignment(.center)
-                        .foregroundStyle(.secondary)
-                    Button("Try Again") {
-                        Task { await musicService.loadRecentPlaylists() }
-                    }
-                    .buttonStyle(.borderedProminent)
-                }
-                .padding()
+        if musicService.isLoading {
+            ProgressView("Loading playlists…")
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
-            } else {
-                List(musicService.recentPlaylists, id: \.id) { playlist in
-                    Button {
-                        Task { await musicService.play(playlist: playlist) }
-                    } label: {
-                        HStack {
-                            VStack(alignment: .leading) {
-                                Text(playlist.name)
-                                    .font(.body)
-                                if let desc = playlist.standardDescription {
-                                    Text(desc)
-                                        .font(.caption)
-                                        .foregroundStyle(.secondary)
-                                        .lineLimit(1)
+
+        } else if let error = musicService.loadError {
+            VStack(spacing: 12) {
+                Image(systemName: "exclamationmark.triangle")
+                    .font(.largeTitle)
+                    .foregroundStyle(.orange)
+                Text(error)
+                    .multilineTextAlignment(.center)
+                    .foregroundStyle(.secondary)
+                Button("Try Again") {
+                    Task { await musicService.loadRecentPlaylists() }
+                }
+                .buttonStyle(.borderedProminent)
+            }
+            .padding()
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+
+        } else {
+            ScrollView {
+                LazyVStack(spacing: 16) {
+
+                    // ── Now Playing card ─────────────────────────────
+                    if musicService.nowPlayingTitle != nil {
+                        NowPlayingCard()
+                            .transition(.move(edge: .top).combined(with: .opacity))
+                    }
+
+                    // ── Library ──────────────────────────────────────
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Your Library")
+                            .font(.headline)
+                            .padding(.horizontal)
+
+                        VStack(spacing: 0) {
+                            ForEach(
+                                Array(musicService.recentPlaylists.enumerated()),
+                                id: \.element.id
+                            ) { index, playlist in
+                                PlaylistRow(playlist: playlist)
+                                if index < musicService.recentPlaylists.count - 1 {
+                                    Divider().padding(.leading, 78)
                                 }
                             }
-                            Spacer()
-                            if musicService.nowPlayingTitle == playlist.name {
-                                Image(systemName: "speaker.wave.2.fill")
-                                    .foregroundStyle(.green)
-                            }
                         }
+                        .background(.background)
+                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                        .padding(.horizontal)
                     }
-                    .buttonStyle(.plain)
                 }
+                .padding(.vertical, 8)
+                .animation(.easeInOut, value: musicService.nowPlayingTitle != nil)
             }
         }
-        .task { await musicService.loadIfNeeded() }
+    }
+}
+
+// MARK: — Now Playing card
+
+private struct NowPlayingCard: View {
+    @Environment(MusicService.self) private var musicService
+
+    var body: some View {
+        VStack(spacing: 20) {
+
+            // Artwork
+            Group {
+                if let artwork = musicService.nowPlayingArtwork {
+                    ArtworkImage(artwork, width: 260)
+                        .clipShape(RoundedRectangle(cornerRadius: 16))
+                } else {
+                    RoundedRectangle(cornerRadius: 16)
+                        .fill(LinearGradient(
+                            colors: [.purple, .blue],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        ))
+                        .frame(width: 260, height: 260)
+                        .overlay(
+                            Image(systemName: "music.note")
+                                .font(.system(size: 80, weight: .ultraLight))
+                                .foregroundStyle(.white.opacity(0.7))
+                        )
+                }
+            }
+            .shadow(color: .black.opacity(0.25), radius: 20, x: 0, y: 8)
+            .frame(maxWidth: .infinity, alignment: .center)
+
+            // Title + artist
+            VStack(alignment: .leading, spacing: 4) {
+                Text(musicService.nowPlayingTitle ?? "")
+                    .font(.title3.bold())
+                    .lineLimit(1)
+                if let artist = musicService.nowPlayingArtist {
+                    Text(artist)
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+
+            // Transport controls  ⏮  ⏯  ⏭
+            HStack(spacing: 48) {
+                Button {
+                    Task { await musicService.skipPrevious() }
+                } label: {
+                    Image(systemName: "backward.fill")
+                        .font(.title)
+                }
+
+                Button {
+                    Task { await musicService.playPause() }
+                } label: {
+                    Image(systemName: musicService.isPlaying
+                          ? "pause.circle.fill"
+                          : "play.circle.fill")
+                        .font(.system(size: 64))
+                }
+
+                Button {
+                    Task { await musicService.skipNext() }
+                } label: {
+                    Image(systemName: "forward.fill")
+                        .font(.title)
+                }
+            }
+            .foregroundStyle(.primary)
+            .frame(maxWidth: .infinity, alignment: .center)
+        }
+        .padding(20)
+        .background(.background)
+        .clipShape(RoundedRectangle(cornerRadius: 20))
+        .padding(.horizontal)
+        // Poll every second so title/artwork updates when the playlist auto-advances
+        .task {
+            while !Task.isCancelled {
+                musicService.updateNowPlaying()
+                try? await Task.sleep(nanoseconds: 1_000_000_000)
+            }
+        }
+    }
+}
+
+// MARK: — Playlist row
+
+private struct PlaylistRow: View {
+    @Environment(MusicService.self) private var musicService
+    let playlist: Playlist
+
+    var body: some View {
+        Button {
+            Task { await musicService.play(playlist: playlist) }
+        } label: {
+            HStack(spacing: 12) {
+                // Playlist artwork
+                if let artwork = playlist.artwork {
+                    ArtworkImage(artwork, width: 50)
+                        .clipShape(RoundedRectangle(cornerRadius: 8))
+                } else {
+                    RoundedRectangle(cornerRadius: 8)
+                        .fill(.quaternary)
+                        .frame(width: 50, height: 50)
+                        .overlay(
+                            Image(systemName: "music.note.list")
+                                .foregroundStyle(.secondary)
+                        )
+                }
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(playlist.name)
+                        .font(.body)
+                        .foregroundStyle(.primary)
+                        .lineLimit(1)
+                    if let desc = playlist.standardDescription {
+                        Text(desc)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .lineLimit(1)
+                    }
+                }
+
+                Spacer()
+
+                if musicService.currentPlaylistID == playlist.id {
+                    Image(systemName: musicService.isPlaying
+                          ? "speaker.wave.2.fill"
+                          : "speaker.fill")
+                        .foregroundStyle(.green)
+                        .font(.caption)
+                }
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 10)
+        }
+        .buttonStyle(.plain)
+        // Refresh after tapping so the playing indicator appears immediately
+        .task { musicService.updateNowPlaying() }
     }
 }
 
@@ -159,7 +315,7 @@ private struct PodcastTabView: View {
     }
 }
 
-// MARK: — Sub-views
+// MARK: — Podcast sub-views
 
 private struct ShowRow: View {
     let show: PodcastShow
