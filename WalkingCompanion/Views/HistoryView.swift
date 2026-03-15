@@ -23,8 +23,8 @@ struct HistoryView: View {
                     }
                 }
             }
-            .navigationTitle("History")
-            .navigationBarTitleDisplayMode(.inline)
+            .navigationTitle("History")           // used as back-button label in SessionDetailView
+            .toolbar(.hidden, for: .navigationBar) // hide at root; shows when pushed
         }
     }
 }

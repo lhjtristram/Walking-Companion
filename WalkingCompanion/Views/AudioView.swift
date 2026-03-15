@@ -12,24 +12,23 @@ struct AudioView: View {
         case podcasts = "Podcasts"
     }
 
+    // No NavigationStack here — iOS 26 glass nav bar takes up too much vertical
+    // space and we don't need push navigation at this level. PodcastTabView adds
+    // its own NavigationStack for episode-list navigation.
     var body: some View {
-        NavigationStack {
-            VStack(spacing: 0) {
-                Picker("", selection: $selectedTab) {
-                    ForEach(AudioTab.allCases, id: \.self) { tab in
-                        Text(tab.rawValue).tag(tab)
-                    }
-                }
-                .pickerStyle(.segmented)
-                .padding()
-
-                switch selectedTab {
-                case .music:    MusicTabView()
-                case .podcasts: PodcastTabView()
+        VStack(spacing: 0) {
+            Picker("", selection: $selectedTab) {
+                ForEach(AudioTab.allCases, id: \.self) { tab in
+                    Text(tab.rawValue).tag(tab)
                 }
             }
-            .navigationTitle("Audio")
-            .navigationBarTitleDisplayMode(.inline)
+            .pickerStyle(.segmented)
+            .padding()
+
+            switch selectedTab {
+            case .music:    MusicTabView()
+            case .podcasts: PodcastTabView()
+            }
         }
     }
 }
@@ -52,6 +51,8 @@ private struct MusicTabView: View {
                 ContentUnavailableView("Apple Music Unavailable", systemImage: "music.note")
             }
         }
+        // Load playlists as soon as this tab appears
+        .task { await musicService.loadIfNeeded() }
     }
 
     // MARK: Authorized state
@@ -194,7 +195,7 @@ private struct NowPlayingCard: View {
         .background(.background)
         .clipShape(RoundedRectangle(cornerRadius: 20))
         .padding(.horizontal)
-        // Poll every second so title/artwork updates when the playlist auto-advances
+        // Poll every second so title/artwork update when the playlist auto-advances
         .task {
             while !Task.isCancelled {
                 musicService.updateNowPlaying()
@@ -256,8 +257,6 @@ private struct PlaylistRow: View {
             .padding(.vertical, 10)
         }
         .buttonStyle(.plain)
-        // Refresh after tapping so the playing indicator appears immediately
-        .task { musicService.updateNowPlaying() }
     }
 }
 
@@ -266,51 +265,55 @@ private struct PlaylistRow: View {
 private struct PodcastTabView: View {
     @Environment(PodcastManager.self) private var podcasts
     @State private var query = ""
-    @State private var selectedShow: PodcastShow?
 
     var body: some View {
-        VStack {
-            // Search bar
-            HStack {
-                Image(systemName: "magnifyingglass")
-                    .foregroundStyle(.secondary)
-                TextField("Search podcasts", text: $query)
-                    .submitLabel(.search)
-                    .onSubmit { Task { await podcasts.search(query: query) } }
-            }
-            .padding(10)
-            .background(.quaternary)
-            .clipShape(RoundedRectangle(cornerRadius: 10))
-            .padding(.horizontal)
-
-            // Now playing bar
-            if let episode = podcasts.activeEpisode {
-                NowPlayingBar(episode: episode, isPlaying: podcasts.isPlaying) {
-                    podcasts.pauseResume()
+        // NavigationStack lives here (not in AudioView) so EpisodeListView
+        // can be pushed without a visible nav bar at the podcast root level.
+        NavigationStack {
+            VStack {
+                // Search bar
+                HStack {
+                    Image(systemName: "magnifyingglass")
+                        .foregroundStyle(.secondary)
+                    TextField("Search podcasts", text: $query)
+                        .submitLabel(.search)
+                        .onSubmit { Task { await podcasts.search(query: query) } }
                 }
-            }
+                .padding(10)
+                .background(.quaternary)
+                .clipShape(RoundedRectangle(cornerRadius: 10))
+                .padding(.horizontal)
 
-            // Results
-            if podcasts.isSearching {
-                ProgressView().padding()
-                Spacer()
-            } else if query.isEmpty {
-                ContentUnavailableView(
-                    "Search Podcasts",
-                    systemImage: "mic",
-                    description: Text("Find shows from Apple Podcasts and Spotify.")
-                )
-            } else if podcasts.searchResults.isEmpty {
-                ContentUnavailableView.search(text: query)
-            } else {
-                List(podcasts.searchResults, id: \.show.id) { item in
-                    NavigationLink {
-                        EpisodeListView(show: item.show)
-                    } label: {
-                        ShowRow(show: item.show, source: item.service)
+                // Now playing bar
+                if let episode = podcasts.activeEpisode {
+                    NowPlayingBar(episode: episode, isPlaying: podcasts.isPlaying) {
+                        podcasts.pauseResume()
+                    }
+                }
+
+                // Results
+                if podcasts.isSearching {
+                    ProgressView().padding()
+                    Spacer()
+                } else if query.isEmpty {
+                    ContentUnavailableView(
+                        "Search Podcasts",
+                        systemImage: "mic",
+                        description: Text("Find shows from Apple Podcasts and Spotify.")
+                    )
+                } else if podcasts.searchResults.isEmpty {
+                    ContentUnavailableView.search(text: query)
+                } else {
+                    List(podcasts.searchResults, id: \.show.id) { item in
+                        NavigationLink {
+                            EpisodeListView(show: item.show)
+                        } label: {
+                            ShowRow(show: item.show, source: item.service)
+                        }
                     }
                 }
             }
+            .toolbar(.hidden, for: .navigationBar)   // hide at root; shows in EpisodeListView
         }
     }
 }

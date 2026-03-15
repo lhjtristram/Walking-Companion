@@ -33,8 +33,8 @@ struct InsightsView: View {
                     }
                 }
             }
-            .navigationTitle("Insights")
-            .navigationBarTitleDisplayMode(.inline)
+            .navigationTitle("Insights")          // used as back-button label if we push views
+            .toolbar(.hidden, for: .navigationBar)
         }
     }
 
