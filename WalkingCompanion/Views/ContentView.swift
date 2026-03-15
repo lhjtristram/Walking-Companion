@@ -79,7 +79,7 @@ struct ContentView: View {
             .padding(.horizontal, 20)
             .padding(.bottom, 12)
         }
-        .ignoresSafeArea()
+        .ignoresSafeArea(.all)
         .task {
             try? await WorkoutService().requestPermissions()
             LocationService().requestPermissions()

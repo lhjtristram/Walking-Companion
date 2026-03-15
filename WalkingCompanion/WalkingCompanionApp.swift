@@ -1,5 +1,6 @@
 import SwiftUI
 import SwiftData
+import UIKit
 
 @main
 struct WalkingCompanionApp: App {
@@ -30,11 +31,27 @@ struct WalkingCompanionApp: App {
 
     var body: some Scene {
         WindowGroup {
-            ContentView()
-                .environment(settings)
-                .environment(coordinator)
-                .environment(musicService)
-                .environment(podcastManager)
+            // Outer ZStack ensures the backing UIKit window area is always
+            // filled with the app colour — never the wallpaper / black.
+            ZStack {
+                Color(.systemGroupedBackground)
+                    .ignoresSafeArea(.all)
+
+                ContentView()
+                    .environment(settings)
+                    .environment(coordinator)
+                    .environment(musicService)
+                    .environment(podcastManager)
+            }
+            .task {
+                // Belt-and-suspenders: also set the UIKit window's own
+                // backgroundColor so any pixel the SwiftUI layer doesn't
+                // reach is still grey, not transparent/black.
+                UIApplication.shared.connectedScenes
+                    .compactMap { $0 as? UIWindowScene }
+                    .flatMap(\.windows)
+                    .forEach { $0.backgroundColor = .systemGroupedBackground }
+            }
         }
         .modelContainer(for: WalkSession.self)
     }
