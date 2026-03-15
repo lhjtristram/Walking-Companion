@@ -1,5 +1,6 @@
 import Foundation
 import WatchConnectivity
+import MediaPlayer
 import Observation
 
 /// Manages the iPhone side of WatchConnectivity.
@@ -85,6 +86,18 @@ extension WatchConnector: WCSessionDelegate {
                 self.onStartWalkFromWatch?()
             } else if message[WatchMessage.stopWalkKey] != nil {
                 self.onStopWalkFromWatch?()
+            } else if let cmd = message[WatchMessage.mediaCommandKey] as? String {
+                let player = MPMusicPlayerController.systemMusicPlayer
+                switch cmd {
+                case WatchMessage.mediaPlayPause:
+                    player.playbackState == .playing ? player.pause() : player.play()
+                case WatchMessage.mediaSkipNext:
+                    player.skipToNextItem()
+                case WatchMessage.mediaSkipPrevious:
+                    player.skipToPreviousItem()
+                default:
+                    break
+                }
             }
         }
     }

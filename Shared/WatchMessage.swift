@@ -15,4 +15,15 @@ enum WatchMessage {
 
     // Alert (phone → watch: trigger haptic)
     static let cadenceAlertKey = "cadenceAlert"
+
+    // Media controls (watch → phone)
+    static let mediaCommandKey  = "mediaCommand"
+    static let mediaPlayPause   = "playPause"
+    static let mediaSkipNext    = "skipNext"
+    static let mediaSkipPrevious = "skipPrevious"
+}
+
+/// Media control commands sent from Watch → iPhone via WatchConnectivity.
+enum MediaCommand: String {
+    case playPause, skipNext, skipPrevious
 }

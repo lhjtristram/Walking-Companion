@@ -1,21 +1,26 @@
 import SwiftUI
 import MediaPlayer
 
-/// Now Playing controls on the watch — controls system audio player,
-/// which works for both Apple Music and podcast AVPlayer playback.
+/// Now Playing controls on the watch.
+/// Reads track info via MPNowPlayingInfoCenter (reflects iPhone's player on watchOS).
+/// Sends play/pause/skip commands to the iPhone via WatchConnectivity.
 struct AudioControlView: View {
-    @State private var nowPlayingInfo: NowPlayingInfo?
+    @Environment(WatchSessionManager.self) private var sessionManager
+
+    @State private var title: String?
+    @State private var artist: String?
+    @State private var isPlaying: Bool = false
     @State private var timer: Timer?
 
     var body: some View {
         VStack(spacing: 8) {
-            if let info = nowPlayingInfo {
-                Text(info.title)
+            if let title {
+                Text(title)
                     .font(.caption2.bold())
                     .lineLimit(2)
                     .multilineTextAlignment(.center)
 
-                Text(info.artist)
+                Text(artist ?? "")
                     .font(.caption2)
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
@@ -27,29 +32,23 @@ struct AudioControlView: View {
 
             HStack(spacing: 20) {
                 Button {
-                    MPRemoteCommandCenter.shared().previousTrackCommand.isEnabled = true
-                    MPMusicPlayerController.systemMusicPlayer.skipToPreviousItem()
+                    sessionManager.sendMediaCommand(.skipPrevious)
                 } label: {
                     Image(systemName: "backward.fill")
                 }
 
                 Button {
-                    let player = MPMusicPlayerController.systemMusicPlayer
-                    if player.playbackState == .playing {
-                        player.pause()
-                    } else {
-                        player.play()
-                    }
-                    refreshNowPlaying()
+                    sessionManager.sendMediaCommand(.playPause)
+                    isPlaying.toggle()
                 } label: {
-                    Image(systemName: nowPlayingInfo?.isPlaying == true ? "pause.fill" : "play.fill")
+                    Image(systemName: isPlaying ? "pause.fill" : "play.fill")
                         .font(.title3)
                 }
                 .buttonStyle(.borderedProminent)
                 .tint(.green)
 
                 Button {
-                    MPMusicPlayerController.systemMusicPlayer.skipToNextItem()
+                    sessionManager.sendMediaCommand(.skipNext)
                 } label: {
                     Image(systemName: "forward.fill")
                 }
@@ -68,22 +67,14 @@ struct AudioControlView: View {
         }
     }
 
-    private func refreshNowPlaying() {
-        let player = MPMusicPlayerController.systemMusicPlayer
-        guard let item = player.nowPlayingItem else {
-            nowPlayingInfo = nil
-            return
-        }
-        nowPlayingInfo = NowPlayingInfo(
-            title: item.title ?? "Unknown",
-            artist: item.artist ?? item.podcastTitle ?? "",
-            isPlaying: player.playbackState == .playing
-        )
-    }
-}
+    // MARK: — Helpers
 
-private struct NowPlayingInfo {
-    let title: String
-    let artist: String
-    let isPlaying: Bool
+    private func refreshNowPlaying() {
+        let info = MPNowPlayingInfoCenter.default().nowPlayingInfo
+        title  = info?[MPMediaItemPropertyTitle] as? String
+        artist = info?[MPMediaItemPropertyArtist] as? String
+            ?? info?[MPMediaItemPropertyPodcastTitle] as? String
+        let rate = info?[MPNowPlayingInfoPropertyPlaybackRate] as? Double ?? 0
+        isPlaying = rate > 0
+    }
 }

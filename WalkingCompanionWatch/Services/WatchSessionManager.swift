@@ -30,6 +30,14 @@ final class WatchSessionManager: NSObject {
         guard WCSession.default.isReachable else { return }
         WCSession.default.sendMessage([WatchMessage.stopWalkKey: true], replyHandler: nil)
     }
+
+    func sendMediaCommand(_ command: MediaCommand) {
+        guard WCSession.default.isReachable else { return }
+        WCSession.default.sendMessage(
+            [WatchMessage.mediaCommandKey: command.rawValue],
+            replyHandler: nil
+        )
+    }
 }
 
 // MARK: — WCSessionDelegate
