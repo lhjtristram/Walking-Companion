@@ -3,9 +3,9 @@ name: WalkingCompanion
 options:
   bundleIdPrefix: com.lhjtristram
   deploymentTarget:
-    iOS: "17.0"
-    watchOS: "10.0"
-  xcodeVersion: "15.0"
+    iOS: "26.0"
+    watchOS: "26.0"
+  xcodeVersion: "26.0"
   createIntermediateGroups: true
   groupSortPosition: none
 
@@ -21,7 +21,7 @@ targets:
   WalkingCompanion:
     type: application
     platform: iOS
-    deploymentTarget: "17.0"
+    deploymentTarget: "26.0"
 
     info:
       path: WalkingCompanion/Info.plist
@@ -54,7 +54,7 @@ targets:
   WalkingCompanionWatch:
     type: application
     platform: watchOS
-    deploymentTarget: "10.0"
+    deploymentTarget: "26.0"
 
     info:
       path: WalkingCompanionWatch/Info.plist
