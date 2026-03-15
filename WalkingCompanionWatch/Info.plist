@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>WKApplication</key>
+    <true/>
+
+    <key>NSHealthShareUsageDescription</key>
+    <string>Walking Companion reads heart rate and health data during walks.</string>
+
+    <key>NSHealthUpdateUsageDescription</key>
+    <string>Walking Companion saves your walk workouts to Apple Health.</string>
+
+    <key>UIBackgroundModes</key>
+    <array>
+        <string>workout-processing</string>
+    </array>
+</dict>
+</plist>

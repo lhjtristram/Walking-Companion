@@ -1,0 +1,44 @@
+# ── Xcode generated (recreated by: xcodegen generate) ────────────────────────
+*.xcodeproj/
+*.xcworkspace/
+
+# ── Xcode build artefacts ─────────────────────────────────────────────────────
+DerivedData/
+build/
+*.ipa
+*.dSYM.zip
+*.dSYM
+
+# ── Xcode user state ──────────────────────────────────────────────────────────
+xcuserdata/
+*.xcscmblueprint
+*.xccheckout
+
+# ── macOS ─────────────────────────────────────────────────────────────────────
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# ── Swift Package Manager ─────────────────────────────────────────────────────
+.build/
+.swiftpm/
+Package.resolved
+
+# ── CocoaPods (not used, but just in case) ────────────────────────────────────
+Pods/
+Podfile.lock
+
+# ── Fastlane ──────────────────────────────────────────────────────────────────
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots/**/*.png
+fastlane/test_output
+
+# ── Secrets (never commit these) ──────────────────────────────────────────────
+*.p12
+*.mobileprovision
+AuthKey_*.p8
+Secrets.swift
+secrets.yml
+.env
