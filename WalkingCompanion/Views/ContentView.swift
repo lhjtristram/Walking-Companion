@@ -28,6 +28,10 @@ struct ContentView: View {
 
     var body: some View {
         ZStack(alignment: .bottom) {
+            // ── Full-screen background ───────────────────────────────
+            Color(.systemGroupedBackground)
+                .ignoresSafeArea()
+
             // ── Page content ────────────────────────────────────────
             Group {
                 switch selectedTab {
@@ -75,7 +79,7 @@ struct ContentView: View {
             .padding(.horizontal, 20)
             .padding(.bottom, 12)
         }
-        .ignoresSafeArea(edges: .bottom)
+        .ignoresSafeArea()
         .task {
             try? await WorkoutService().requestPermissions()
             LocationService().requestPermissions()
