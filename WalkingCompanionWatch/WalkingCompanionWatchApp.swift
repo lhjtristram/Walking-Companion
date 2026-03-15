@@ -2,8 +2,8 @@ import SwiftUI
 
 @main
 struct WalkingCompanionWatchApp: App {
-    @StateObject private var sessionManager = WatchSessionManager()
-    @StateObject private var workoutService = WatchWorkoutService()
+    @State private var sessionManager = WatchSessionManager()
+    @State private var workoutService = WatchWorkoutService()
 
     var body: some Scene {
         WindowGroup {
