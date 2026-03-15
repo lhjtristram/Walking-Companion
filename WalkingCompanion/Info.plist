@@ -2,50 +2,21 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-    <!-- Background modes required for walk tracking + audio -->
-    <key>UIBackgroundModes</key>
-    <array>
-        <string>audio</string>
-        <string>location</string>
-        <string>workout-processing</string>
-    </array>
-
-    <!-- Permission descriptions shown to the user -->
-    <key>NSMotionUsageDescription</key>
-    <string>Walking Companion uses motion data to count your steps and measure cadence.</string>
-
-    <key>NSLocationWhenInUseUsageDescription</key>
-    <string>Walking Companion tracks your route and distance during walks.</string>
-
-    <key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-    <string>Walking Companion needs background location access to track your route during walks.</string>
-
-    <key>NSHealthShareUsageDescription</key>
-    <string>Walking Companion reads your health data to show workout history and heart rate.</string>
-
-    <key>NSHealthUpdateUsageDescription</key>
-    <string>Walking Companion saves your walks to Apple Health.</string>
-
-    <key>NSAppleMusicUsageDescription</key>
-    <string>Walking Companion accesses your Apple Music library so you can listen during walks.</string>
-
-    <!-- Spotify URL scheme (needed to check if Spotify is installed) -->
-    <key>LSApplicationQueriesSchemes</key>
-    <array>
-        <string>spotify</string>
-    </array>
-
-    <!-- Spotify callback URL scheme — update CLIENT_ID to match your Spotify app -->
-    <key>CFBundleURLTypes</key>
-    <array>
-        <dict>
-            <key>CFBundleURLName</key>
-            <string>Spotify Authentication Callback</string>
-            <key>CFBundleURLSchemes</key>
-            <array>
-                <string>walkingcompanion</string>
-            </array>
-        </dict>
-    </array>
+	<key>CFBundleDevelopmentRegion</key>
+	<string>$(DEVELOPMENT_LANGUAGE)</string>
+	<key>CFBundleExecutable</key>
+	<string>$(EXECUTABLE_NAME)</string>
+	<key>CFBundleIdentifier</key>
+	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+	<key>CFBundleInfoDictionaryVersion</key>
+	<string>6.0</string>
+	<key>CFBundleName</key>
+	<string>$(PRODUCT_NAME)</string>
+	<key>CFBundlePackageType</key>
+	<string>APPL</string>
+	<key>CFBundleShortVersionString</key>
+	<string>1.0</string>
+	<key>CFBundleVersion</key>
+	<string>1</string>
 </dict>
 </plist>

@@ -5,9 +5,6 @@
     <!-- HealthKit: read + write workouts, steps, heart rate, calories -->
     <key>com.apple.developer.healthkit</key>
     <true/>
-    <key>com.apple.developer.healthkit.access</key>
-    <array/>
-
     <!-- WatchConnectivity does not require an entitlement entry -->
 </dict>
 </plist>
